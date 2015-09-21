@@ -1,0 +1,23 @@
+{
+  "name": "mmjurov/mx.tools",
+  "description": "Модуль со вспомогательными инструментами для разработки",
+  "keywords": ["bitrix", "1С Битрикс", "d7", "модуль", "Битрикс", "Максимастер"],
+  "type": "bitrix-module",
+  "license": "MIT",
+  "support": {
+    "www": "http://maximaster.ru",
+    "source": "http://github.com/mmjurov/mx.tools/"
+  },
+  "authors": [
+    {
+      "name": "Журов Михаил",
+      "email": "m.zhurov@maximaster.ru"
+    }
+  ],
+  "extra": {
+    "installer-name": "mx.tools"
+  },
+  "require": {
+    "composer/installers": "*"
+  }
+}
