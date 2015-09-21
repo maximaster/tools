@@ -9,7 +9,7 @@ class Listener extends Psr4Autoloader
     protected $prefixes = array();
 
     /**
-     * РРЅРёС†РёРёСЂСѓРµС‚ СЂРµРіРёСЃС‚СЂР°С†РёСЋ РІСЃРµС… СЃРѕР±С‹С‚РёР№
+     * Инициирует регистрацию всех событий
      */
     public function register()
     {
@@ -27,7 +27,7 @@ class Listener extends Psr4Autoloader
     }
 
     /**
-     * Р РµРіРёСЃС‚СЂРёСЂСѓРµС‚ СЃРѕР±С‹С‚РёРµ СЃ Р·Р°РґР°РЅРЅС‹РјРё РїР°СЂР°РјРµС‚СЂР°РјРё
+     * Регистрирует событие с заданными параметрами
      * @param     $moduleId
      * @param     $eventType
      * @param     $callback
@@ -40,7 +40,7 @@ class Listener extends Psr4Autoloader
     }
 
     /**
-     * РќР° РѕСЃРЅРѕРІР°РЅРёРё РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° РёРјРµРЅ СЃРѕР±РёСЂР°РµС‚ РІСЃРµ РѕР±СЂР°Р±РѕС‚С‡РёРєРё РІ РјР°СЃСЃРёРІ
+     * На основании пространства имен собирает все обработчики в массив
      * @param $namespace
      * @param $handlersDirectory
      * @return array
