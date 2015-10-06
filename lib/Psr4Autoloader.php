@@ -4,6 +4,8 @@ namespace Mx\Tools;
 
 class Psr4Autoloader
 {
+    private static $instance;
+
     /**
      * Ассоциативный массив. Ключи содержат префикс пространства имён, значение — массив базовых директорий для классов
      * в этом пространстве имён.
@@ -138,4 +140,22 @@ class Psr4Autoloader
         }
         return false;
     }
+
+    /**
+     * Автозагрузчик должен быть один единственный в рамках имени класса и метода
+     * @return Psr4Autoloader
+     */
+    public static function getInstance()
+    {
+        if (!self::$instance)
+        {
+            self::$instance = new self;
+        }
+
+        return self::$instance;
+    }
+
+    private function __wakeup(){}
+    private function __clone(){}
+    private function __create(){}
 }
