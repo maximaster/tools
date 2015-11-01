@@ -24,12 +24,12 @@ class IblockStructure
             if ($db->getSelectedRowsCount() == 0)
             {
                 $cache->AbortDataCache();
-                throw new ArgumentException('РЈРєР°Р·Р°РЅ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РёРЅС„РѕР±Р»РѕРєР°');
+                throw new ArgumentException('Указан идентификатор несуществующего инфоблока');
             }
             elseif ($db->getSelectedRowsCount() > 1)
             {
                 $cache->AbortDataCache();
-                throw new ArgumentException("РЎСѓС‰РµСЃС‚РІСѓРµС‚ {$db->getSelectedRowsCount()} РёРЅС„РѕР±Р»РѕРєР°(РѕРІ) СЃ {$field} = {$primary}");
+                throw new ArgumentException("Существует {$db->getSelectedRowsCount()} инфоблока(ов) с {$field} = {$primary}");
             }
 
             $iblock = $db->fetch();
@@ -65,12 +65,12 @@ class IblockStructure
                 $code = $prop['CODE'];
                 if (isset($props[ $code ]))
                 {
-                    throw new \LogicException("Р’ РёРЅС„РѕР±Р»РѕРєe {$primary} СЃРІРѕР№СЃС‚РІРѕ {$code} РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґРІР°Р¶РґС‹");
+                    throw new \LogicException("В инфоблокe {$primary} свойство {$code} используется дважды");
                 }
 
                 if (strlen($code) === 0)
                 {
-                    throw new \LogicException("Р’ РёРЅС„РѕР±Р»РѕРєРµ {$primary} РґР»СЏ СЃРІРѕР№СЃС‚РІР° {$prop['NAME']} РЅРµ Р·Р°РґР°РЅ СЃРёРјРІРѕР»СЊРЅС‹Р№ РєРѕРґ");
+                    throw new \LogicException("В инфоблоке {$primary} для свойства {$prop['NAME']} не задан символьный код");
                 }
 
                 $props[ $code ] = $prop;

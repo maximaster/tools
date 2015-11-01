@@ -77,7 +77,7 @@ abstract class ElementPropMultipleTable extends Entity\DataManager
         $iblock = $meta['iblock'];
         if (!$iblock)
         {
-            throw new Main\ArgumentException('РЈРєР°Р·Р°РЅ РєРѕРґ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РёРЅС„РѕР±Р»РѕРєР°');
+            throw new Main\ArgumentException('Указан код несуществующего инфоблока');
         }
 
         self::$iblockCode = $iblockCode;

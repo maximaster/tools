@@ -18,45 +18,45 @@ class ElementPropertyTable extends Entity\DataManager
                 'data_type' => 'integer',
                 'primary' => true,
                 'autocomplete' => true,
-                'title' => 'РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·РЅР°С‡РµРЅРёСЏ СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Идентификатор значения свойства',
             ),
             'IBLOCK_PROPERTY_ID' => array(
                 'data_type' => 'integer',
-                'title' => 'РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Идентификатор свойства',
             ),
             'IBLOCK_ELEMENT_ID' => array(
                 'data_type' => 'integer',
-                'title' => 'РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СЌР»РµРјРµРЅС‚Р°',
+                'title' => 'Идентификатор элемента',
             ),
             'PROPERTY' => array(
                 'data_type' => 'Bitrix\Iblock\PropertyTable',
                 'reference' => array('=this.IBLOCK_PROPERTY_ID' => 'ref.ID'),
             ),
-            //TODO РЎРІСЏР·Р°С‚СЊ РёРјРµРЅРЅРѕ СЃ С‚РѕР№ СЃСѓС‰РЅРѕСЃС‚СЊСЋ, РєРѕС‚РѕСЂР°СЏ РѕС‚РЅРѕСЃРёС‚СЃСЏ Рє РєРѕРЅРєСЂРµС‚РЅРѕРјСѓ РёРЅС„РѕР±Р»РѕРєСѓ
-            //С‡С‚РѕР±С‹ Р±С‹Р»Р° РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ С‡Р°Р№РЅРёС‚СЊ СЃРІСЏР·Рё РёР· Р·РЅР°С‡РµРЅРёР№ СЃРІРѕР№СЃС‚РІ
+            //TODO Связать именно с той сущностью, которая относится к конкретному инфоблоку
+            //чтобы была возможность чайнить связи из значений свойств
             /*'ELEMENT' => array(
                 'data_type' => 'Mx\Tools\Orm\Iblock\ElementTable',
                 'reference' => array('=this.IBLOCK_ELEMENT_ID' => 'ref.ID'),
             ),*/
             'VALUE' => array(
                 'data_type' => 'string',
-                'title' => 'Р—РЅР°С‡РµРЅРёРµ СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Значение свойства',
             ),
             'VALUE_TYPE' => array(
                 'data_type' => 'string',
-                'title' => 'РўРёРї СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Тип свойства',
             ),
             'VALUE_ENUM' => array(
                 'data_type' => 'integer',
-                'title' => 'Р—РЅР°С‡РµРЅРёРµ СЃРІРѕР№СЃС‚РІР° С‚РёРїР° "РЎРїРёСЃРѕРє"',
+                'title' => 'Значение свойства типа "Список"',
             ),
             'VALUE_NUM' => array(
                 'data_type' => 'float',
-                'title' => 'Р§РёСЃР»РѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Числовое значение свойства',
             ),
             'DESCRIPTION' => array(
                 'data_type' => 'string',
-                'title' => 'РћРїРёСЃР°РЅРёРµ Р·РЅР°С‡РµРЅРёСЏ СЃРІРѕР№СЃС‚РІР°',
+                'title' => 'Описание значения свойства',
             ),
         );
 

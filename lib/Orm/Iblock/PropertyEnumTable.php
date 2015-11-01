@@ -11,11 +11,11 @@ class PropertyEnumTable
                 'data_type' => 'integer',
                 'primary' => true,
                 'autocomplete' => true,
-                'title' => 'Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð° Ñ‚Ð¸Ð¿Ð° "Ð¡Ð¿Ð¸ÑÐ¾Ðº"',
+                'title' => 'Èäåíòèôèêàòîð çíà÷åíèÿ ñâîéñòâà òèïà "Ñïèñîê"',
             ),
             'PROPERTY_ID' => array(
                 'data_type' => 'integer',
-                'title' => 'Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð°',
+                'title' => 'Èäåíòèôèêàòîð ñâîéñòâà',
             ),
             'PROPERTY' => array(
                 'data_type' => 'Bitrix\Iblock\PropertyTable',
@@ -23,20 +23,20 @@ class PropertyEnumTable
             ),
             'VALUE' => array(
                 'data_type' => 'string',
-                'title' => 'Ð—Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð°',
+                'title' => 'Çíà÷åíèå ñâîéñòâà',
             ),
             'DEF' => array(
                 'data_type' => 'boolean',
                 'values' => array('N','Y'),
-                'title' => 'ÐŸÐ¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ',
+                'title' => 'Ïî óìîë÷àíèþ',
             ),
             'SORT' => array(
                 'data_type' => 'integer',
-                'title' => 'Ð¡Ð¾Ñ€Ñ‚Ð¸Ñ€Ð¾Ð²ÐºÐ°',
+                'title' => 'Ñîðòèðîâêà',
             ),
             'XML_ID' => array(
                 'data_type' => 'string',
-                'title' => 'ÐšÐ¾Ð´ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð°',
+                'title' => 'Êîä çíà÷åíèÿ ñâîéñòâà',
             ),
             'TMP_ID' => array(
                 'data_type' => 'string',

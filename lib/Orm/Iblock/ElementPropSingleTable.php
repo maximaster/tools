@@ -79,7 +79,7 @@ class ElementPropSingleTable extends Entity\DataManager
         $iblock = $meta['iblock'];
         if (!$iblock)
         {
-            throw new ArgumentException('РЈРєР°Р·Р°РЅ РєРѕРґ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РёРЅС„РѕР±Р»РѕРєР°');
+            throw new ArgumentException('Указан код несуществующего инфоблока');
         }
 
         self::$iblockCode = $iblockCode;
