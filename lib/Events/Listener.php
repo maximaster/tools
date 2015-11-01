@@ -48,11 +48,12 @@ class Listener extends Psr4Autoloader
     private function collect($namespace, $handlersDirectory)
     {
         $ns = $namespace;
+        $collection = array();
+        if (!is_dir($handlersDirectory)) return $collection;
 
         $dirIterator   = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($handlersDirectory));
         $regexIterator = new \RegexIterator($dirIterator, '/^.+\.php$/i', \RecursiveRegexIterator::GET_MATCH);
 
-        $collection = array();
         foreach ($regexIterator as $file)
         {
             $file = current($file);
