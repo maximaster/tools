@@ -2,6 +2,7 @@
 namespace Mx\Tools\Orm\Iblock;
 use Bitrix\Main\Entity;
 use Bitrix\Main;
+use Mx\Tools\Helpers\IblockStructure;
 
 abstract class ElementPropMultipleTable extends Entity\DataManager
 {
@@ -72,7 +73,7 @@ abstract class ElementPropMultipleTable extends Entity\DataManager
 
     public static function getInstance($iblockCode)
     {
-        $meta = ElementTable::getIblockData($iblockCode);
+        $meta = IblockStructure::full($iblockCode);
         $iblock = $meta['iblock'];
         if (!$iblock)
         {

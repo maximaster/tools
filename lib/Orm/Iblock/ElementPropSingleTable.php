@@ -5,6 +5,7 @@ namespace Mx\Tools\Orm\Iblock;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity;
+use Mx\Tools\Helpers\IblockStructure;
 
 class ElementPropSingleTable extends Entity\DataManager
 {
@@ -24,7 +25,7 @@ class ElementPropSingleTable extends Entity\DataManager
                 'primary' => true,
             )
         );
-        $meta = ElementTable::getIblockData(static::$iblockCode);
+        $meta = IblockStructure::full(static::$iblockCode);
 
         foreach ($meta['properties'] as $prop)
         {
@@ -59,9 +60,9 @@ class ElementPropSingleTable extends Entity\DataManager
             }
 
             $map[ $code ] = $mapItem;
-            $map[ $code . '_DESCRIPTION' ] = new Entity\StringField($code . '_DESCRIPTION', array(
+            /*$map[ $code . '_DESCRIPTION' ] = new Entity\StringField($code . '_DESCRIPTION', array(
                 'column_name' => 'DESCRIPTION_' . $id,
-            ));;
+            ));;*/
         }
 
         return $map;
@@ -74,7 +75,7 @@ class ElementPropSingleTable extends Entity\DataManager
      */
     public static function getInstance($iblockCode)
     {
-        $meta = ElementTable::getIblockData($iblockCode);
+        $meta = IblockStructure::full($iblockCode);
         $iblock = $meta['iblock'];
         if (!$iblock)
         {
