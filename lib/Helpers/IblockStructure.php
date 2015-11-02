@@ -1,6 +1,6 @@
 <?php
 
-namespace Mx\Tools\Orm;
+namespace Mx\Tools\Helpers;
 
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\PropertyTable;
