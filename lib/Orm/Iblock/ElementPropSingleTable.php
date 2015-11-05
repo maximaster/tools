@@ -60,9 +60,14 @@ class ElementPropSingleTable extends Entity\DataManager
             }
 
             $map[ $code ] = $mapItem;
-            /*$map[ $code . '_DESCRIPTION' ] = new Entity\StringField($code . '_DESCRIPTION', array(
-                'column_name' => 'DESCRIPTION_' . $id,
-            ));;*/
+
+            if ($prop['WITH_DESCRIPTION'] == 'Y')
+            {
+                $map[ $code . '_DESCRIPTION' ] = new Entity\StringField($code . '_DESCRIPTION', array(
+                    'column_name' => 'DESCRIPTION_' . $id,
+                ));
+            }
+
         }
 
         return $map;
