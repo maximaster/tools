@@ -13,7 +13,7 @@ use Mx\Tools\Orm\Iblock\ElementTable;
 class Query extends \Bitrix\Main\Entity\Query
 {
     /**
-     * @var array Массив с идентификаторами и кодами инфоблоков
+     * @var array РњР°СЃСЃРёРІ СЃ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°РјРё Рё РєРѕРґР°РјРё РёРЅС„РѕР±Р»РѕРєРѕРІ
      */
     private $iblockPrimary = array();
     private $useIblockSearch = null;
@@ -43,9 +43,6 @@ class Query extends \Bitrix\Main\Entity\Query
         return parent::buildQuery();
     }
 
-    /**
-     * Метод инициализирует поиск данных, связанных с инфоблоками и начинает добавление свойств к списку возможных
-     */
     private function appendIblockRelatedData()
     {
         if ($this->searchIblocks())
