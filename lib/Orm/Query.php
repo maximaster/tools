@@ -2,78 +2,75 @@
 
 namespace Mx\Tools\Orm;
 
-use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\ReferenceField;
 use Mx\Tools\Helpers\IblockStructure;
-use Mx\Tools\Orm\Iblock\ElementPropertyTable;
-use Mx\Tools\Orm\Iblock\ElementPropMultipleTable;
-use Mx\Tools\Orm\Iblock\ElementPropSingleTable;
+use Mx\Tools\Interfaces\IblockElementTableInterface;
+use Mx\Tools\Orm\Iblock\ElementTable;
 
+/**
+ * Ð Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ñ‹Ð¹ ÐºÐ»Ð°ÑÑ Ð·Ð°Ð¿Ñ€Ð¾ÑÐ°, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ð¹ Ð¼Ð¾Ð¶ÐµÑ‚ Ð´Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ð¿Ð¾Ð»Ñ Ð² ÑÑƒÑ‰Ð½Ð¾ÑÑ‚ÑŒ Ð¿Ñ€Ð¸ Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ÑÑ‚Ð¸
+ * @package Mx\Tools\Orm
+ */
 class Query extends \Bitrix\Main\Entity\Query
 {
     /**
      * @var array Ìàññèâ ñ èäåíòèôèêàòîðàìè è êîäàìè èíôîáëîêîâ
      */
     private $iblockPrimary = array();
+    private $useIblockSearch = null;
+
+    private function useIblockSearch()
+    {
+        if ($this->useIblockSearch !== null) return $this->useIblockSearch;
+
+        $entityClass = $this->getEntity()->getDataClass();
+        $this->useIblockSearch = $entityClass === '\\Mx\\Tools\\Orm\\Iblock\\ElementTable';
+
+        return $this->useIblockSearch;
+    }
 
     protected function buildQuery()
     {
-        $this->iblockRelatedData();
+        if ($this->useIblockSearch())
+        {
+            $this->appendIblockRelatedData();
+        }
+        else
+        {
+            $entityClass = $this->getEntity()->getDataClass();
+            $this->filter['IBLOCK_ID'] = $entityClass::getIblockId();
+        }
+
         return parent::buildQuery();
     }
 
     /**
      * Ìåòîä èíèöèàëèçèðóåò ïîèñê äàííûõ, ñâÿçàííûõ ñ èíôîáëîêàìè è íà÷èíàåò äîáàâëåíèå ñâîéñòâ ê ñïèñêó âîçìîæíûõ
      */
-    private function iblockRelatedData()
+    private function appendIblockRelatedData()
     {
         if ($this->searchIblocks())
         {
-            $meta = $this->getMetaData();
-            foreach ($meta as $data)
+            $maps = array();
+            if (empty($this->iblockPrimary)) return $maps;
+
+            foreach ($this->iblockPrimary as $iblockPrimary)
             {
-                $this->appendProperties($data['iblock'], $data['properties']);
+                $iblock = IblockStructure::iblock($iblockPrimary);
+                $maps[] = ElementTable::getAdditionalMap($iblock['ID']);
             }
+
+            call_user_func_array(array($this, 'appendIblockFields'), $maps);
         }
     }
 
     private function searchIblocks()
     {
-        return $this->searchInFilter();
-    }
-
-    private function searchInFilter()
-    {
-        $i = new \RecursiveArrayIterator(array($this->filter));
-        iterator_apply($i, array($this, 'recursiveScan'), array($i));
+        array_walk_recursive($this->filter, array($this, 'checkForIblockData'));
         return !empty($this->iblockPrimary);
     }
 
-    private function recursiveScan(\RecursiveArrayIterator $iterator)
+    private function checkForIblockData($value, $key)
     {
-        while ( $iterator->valid() )
-        {
-            $this->checkIblockData($iterator);
-
-            if ( $iterator->hasChildren() )
-            {
-                $this->recursiveScan($iterator->getChildren());
-            }
-            else
-            {
-                $this->checkIblockData($iterator);
-            }
-
-            $iterator->next();
-        }
-    }
-
-    private function checkIblockData(\Iterator $iterator)
-    {
-        $key = $iterator->key();
-        $value = $iterator->current();
-
         if (strpos($key, 'IBLOCK_ID') !== false || strpos($key, 'IBLOCK_CODE') !== false)
         {
             if (is_array($value))
@@ -95,95 +92,18 @@ class Query extends \Bitrix\Main\Entity\Query
         return false;
     }
 
-    private function getMetaData()
+    private function appendIblockFields()
     {
-        $res = array();
-        if (empty($this->iblockPrimary)) return $res;
+        $maps = func_get_args();
+        if (count($maps) === 0) return;
 
-        foreach ($this->iblockPrimary as $iblock)
+        //TODO ÐŸÑ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ Ð½Ð° Ð¿Ð¾Ð²Ñ‚Ð¾Ñ€ÑÑŽÑ‰Ð¸ÐµÑÑ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð° Ð¸ ÑÑƒÑ‰Ð½Ð¾ÑÑ‚Ð¸, Ñ‚.Ðº. Ð·Ð°Ð¿Ñ€Ð¾Ñ Ð¼Ð¾Ð¶ÐµÑ‚ Ð²Ñ‹Ð·Ñ‹Ð²Ð°Ñ‚ÑŒÑÑ Ð´Ð»Ñ Ð´Ð²ÑƒÑ… Ð¸Ð½Ñ„Ð¾Ð±Ð»Ð¾ÐºÐ¾Ð²
+        foreach ($maps as $map)
         {
-            $res[ $iblock ] = IblockStructure::full($iblock);
-        }
-
-        return $res;
-    }
-
-    private function appendProperties(array $iblock, array $props)
-    {
-        if (empty($props)) return;
-
-        $oldProps = $iblock['VERSION'] == 1;
-
-        if (!$oldProps)
-        {
-            $singleProp = ElementPropSingleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
-            //$multipleProp = ElementPropMultipleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
-        }
-        else
-        {
-            $singleProp = ElementPropertyTable::getEntity()->getDataClass();
-        }
-
-        foreach ($props as $code => $prop)
-        {
-            $isMultiple = $prop['MULTIPLE'] == 'Y';
-            if ($isMultiple) continue;
-
-            $newField = null;
-            if ($oldProps)
+            foreach ($map as $field)
             {
-                switch ($prop['PROPERTY_TYPE'])
-                {
-                    case 'N':
-                    case 'E':
-                    case 'G':
-                        $column = 'VALUE_NUM';
-                        break;
-                    case 'L':
-                    case 'S':
-                    default:
-                        $column = 'VALUE';
-                        break;
-                }
-
-                $newField = new ReferenceField(
-                    'PROPERTY_' . $code,
-                    $singleProp,
-                    array(
-                        '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
-                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $prop['ID'])
-                    ),
-                    array('join_type' => 'LEFT')
-                );
-
-                $this->init_entity->addField(
-                    new ExpressionField(
-                        'PROPERTY_' . $code . '_VALUE',
-                        '%s',
-                        "PROPERTY_{$code}.{$column}"
-                    )
-                );
+                $this->init_entity->addField($field);
             }
-            else
-            {
-                $newField = new ReferenceField(
-                    'PROPERTY_' . $code,
-                    $singleProp,
-                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
-                    array('join_type' => 'LEFT')
-                );
-
-                $this->init_entity->addField(
-                    new ExpressionField(
-                        'PROPERTY_' . $code . '_VALUE',
-                        '%s',
-                        "PROPERTY_{$code}.{$prop['CODE']}"
-                    )
-                );
-            }
-
-            if ($newField !== null)
-                $this->init_entity->addField($newField);
         }
     }
 }
