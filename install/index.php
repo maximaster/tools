@@ -10,10 +10,10 @@ class mx_tools extends \CModule
         $this->MODULE_ID = self::MODULE_ID;
         $this->MODULE_VERSION = $arModuleVersion["VERSION"];
         $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
-        $this->MODULE_NAME = 'Èíñòðóìåíòû Maximaster';
+        $this->MODULE_NAME = 'Ð˜Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹ Maximaster';
         $this->MODULE_DESCRIPTION = '';
 
-        $this->PARTNER_NAME = 'ÎÎÎ Ìàêñèìàñòåð';
+        $this->PARTNER_NAME = 'ÐžÐžÐž ÐœÐ°ÐºÑÐ¸Ð¼Ð°ÑÑ‚ÐµÑ€';
         $this->PARTNER_URI = 'http://www.maximaster.ru';
     }
 
