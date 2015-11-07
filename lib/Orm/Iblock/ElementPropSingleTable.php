@@ -29,9 +29,7 @@ class ElementPropSingleTable extends Entity\DataManager
 
         foreach ($meta['properties'] as $prop)
         {
-            if ($prop['MULTIPLE'] == 'Y') {
-                continue;
-            }
+            if ($prop['MULTIPLE'] == 'Y') continue;
 
             $code = $prop['CODE'];
             $id = $prop['ID'];
@@ -67,7 +65,6 @@ class ElementPropSingleTable extends Entity\DataManager
                     'column_name' => 'DESCRIPTION_' . $id,
                 ));
             }
-
         }
 
         return $map;

@@ -37,40 +37,35 @@ abstract class ElementPropMultipleTable extends Entity\DataManager
                 'data_type' => 'integer',
                 'required' => true,
             ),
-            /*new Entity\ReferenceField(
-                'ELEMENT',
-                '\Base',
-                array('=this.IBLOCK_ELEMENT_ID' => 'ref.ID')
-            ),*/
             'IBLOCK_PROPERTY_ID' => array(
                 'data_type' => 'integer',
                 'required' => true,
             ),
             'VALUE' => array(
                 'data_type' => 'string',
-                'required' => true,
+            ),
+            'DESCRIPTION' => array(
+                'data_type' => 'string',
             ),
             'VALUE_ENUM' => array(
                 'data_type' => 'integer',
-                'required' => true,
             ),
             'VALUE_NUM' => array(
                 'data_type' => 'float',
-                'required' => true,
             ),
             new Entity\ReferenceField(
                 'PROPERTY',
                 '\Bitrix\Iblock\Property',
                 array('this.IBLOCK_PROPERTY_ID' => 'ref.ID')
             ),
-            new Entity\ExpressionField(
-                'CODE',
-                '%s',
-                'PROPERTY.CODE'
-            )
         );
     }
 
+    /**
+     * @param $iblockCode
+     * @return Entity\DataManager
+     * @throws Main\ArgumentException
+     */
     public static function getInstance($iblockCode)
     {
         $meta = IblockStructure::full($iblockCode);

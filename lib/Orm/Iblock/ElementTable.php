@@ -11,6 +11,9 @@ use Mx\Tools\Orm\Query;
 
 class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
 {
+
+    private static $concatSeparator = '|<-separator->|';
+
     public static function getIblockId()
     {
         return null;
@@ -50,12 +53,15 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
 
         if (empty($props)) return $map;
 
-        $oldProps = $iblock['VERSION'] == 1;
+        $isOldProps = $iblock['VERSION'] == 1;
 
-        if (!$oldProps)
+        $singlePropTableLinked = false;
+        $singlePropsEntityName = "PROPERTY_TABLE_IBLOCK_{$iblock['ID']}";
+
+        if (!$isOldProps)
         {
             $singleProp = ElementPropSingleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
-            //$multipleProp = ElementPropMultipleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
+            $multipleProp = ElementPropMultipleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
         }
         else
         {
@@ -66,33 +72,32 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
         {
             if (is_numeric($code)) continue;
 
-            $isMultiple = $prop['MULTIPLE'] == 'Y';
-            if ($isMultiple) continue;
-
-            $valueKey = "PROPERTY_{$code}_VALUE";
+            $isMultiple     = $prop['MULTIPLE'] == 'Y';
+            $useDescription = $prop['WITH_DESCRIPTION'] == 'Y';
+            $isNewMultiple  = $isMultiple && !$isOldProps;
+            $valueKey       = "PROPERTY_{$code}_VALUE";
             $descriptionKey = "PROPERTY_{$code}_DESCRIPTION";
-
+            $concatSubquery = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
             $propertyEntity = null;
+            $valueColumn    = 'VALUE';
 
-            if ($oldProps)
+            /*switch ($prop['PROPERTY_TYPE'])
             {
-                switch ($prop['PROPERTY_TYPE'])
-                {
-                    case 'N':
-                    case 'E':
-                    case 'G':
-                        $column = 'VALUE_NUM';
-                        break;
-                    case 'L':
-                    case 'S':
-                    default:
-                        $column = 'VALUE';
-                        break;
-                }
+                case 'N': case 'E': case 'G':   $valueColumn = 'VALUE_NUM';  break;
+                case 'L': case 'S': default:    $valueColumn = 'VALUE';      break;
+            }*/
 
+            /**
+             * Для всех свойств, кроме одиночных 2.0
+             */
+            if ($isOldProps || $isMultiple)
+            {
+                /**
+                 * Для инфоблоков 1.0 нужно цеплять на каждое значение по одной сущности
+                 */
                 $propertyEntity = new Entity\ReferenceField(
                     'PROPERTY_' . $code,
-                    $singleProp,
+                    $isNewMultiple ? $multipleProp : $singleProp,
                     array(
                         '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
                         '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $prop['ID'])
@@ -100,43 +105,63 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                     array('join_type' => 'LEFT')
                 );
 
-                $map[ $valueKey ] = new Entity\ExpressionField(
+                /**
+                 * Делаем быстрый доступ для значения свойства
+                 */
+                $e = new Entity\ExpressionField(
                     $valueKey,
-                    '%s',
-                    "PROPERTY_{$code}.{$column}"
+                    $isMultiple ? $concatSubquery : '%s',
+                    "PROPERTY_{$code}.{$valueColumn}"
                 );
+                if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                $map[ $valueKey ] = $e;
 
-                if ($prop['WITH_DESCRIPTION'] == 'Y')
+                /**
+                 * И для его описания, если оно есть
+                 */
+                if ($useDescription)
                 {
-                    $map[ $descriptionKey ] = new Entity\ExpressionField(
+                    $e = new Entity\ExpressionField(
                         $descriptionKey,
-                        '%s',
+                        $isMultiple ? $concatSubquery : '%s',
                         "PROPERTY_{$code}.DESCRIPTION"
                     );
+                    if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                    $map[ $descriptionKey ] = $e;
                 }
             }
             else
             {
-                $propertyEntity = new Entity\ReferenceField(
-                    'PROPERTY_' . $code,
-                    $singleProp,
-                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
-                    array('join_type' => 'LEFT')
-                );
-
-                $map[ $valueKey ] = new Entity\ExpressionField(
-                    $valueKey,
-                    '%s',
-                    "PROPERTY_{$code}.{$prop['CODE']}"
-                );
-
-                if ($prop['WITH_DESCRIPTION'] == 'Y')
+                /**
+                 * Для не множественных свойств 2.0 цепляем только одну сущность
+                 */
+                if (!$singlePropTableLinked)
                 {
-                    $map[ $descriptionKey ] = new Entity\ExpressionField(
-                        $descriptionKey,
-                        '%s',
-                        "PROPERTY_{$code}.{$prop['CODE']}_DESCRIPTION"
+                    $propertyEntity = new Entity\ReferenceField(
+                        $singlePropsEntityName,
+                        $singleProp,
+                        array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
+                        array('join_type' => 'LEFT')
                     );
+
+                    $singlePropTableLinked = true;
+                }
+                else
+                {
+                    $map[ $valueKey ] = new Entity\ExpressionField(
+                        $valueKey,
+                        '%s',
+                        "{$singlePropsEntityName}.{$prop['CODE']}"
+                    );
+
+                    if ($useDescription)
+                    {
+                        $map[ $descriptionKey ] = new Entity\ExpressionField(
+                            $descriptionKey,
+                            '%s',
+                            "{$singlePropsEntityName}.{$prop['CODE']}_DESCRIPTION"
+                        );
+                    }
                 }
             }
 
@@ -146,9 +171,51 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             }
         }
 
+        /**
+         * Добавим DATAIL_PAGE_URL
+         */
+        $e = new Entity\ExpressionField('DETAIL_PAGE_URL', '%s', 'IBLOCK.DETAIL_PAGE_URL');
+        $e->addFetchDataModifier(function($value, $query, $entry, $fieldName)
+        {
+            $search = array();
+            $replace = array();
+            foreach ($entry as $key => $val)
+            {
+                $search[] = "#{$key}#";
+                $replace[] = $val;
+            }
+            return str_replace($search, $replace, $value);
+        });
+        $map['DETAIL_PAGE_URL'] = $e;
+
         return $map;
     }
 
+    /**
+     * Модификатор данных для множественных свойств. Разрезает строку со сгруппированным значением множественных свойств
+     *
+     * @param $value
+     * @param $query
+     * @param $entry
+     * @param $fieldName
+     * @return array
+     */
+    public static function multiValuesDataModifier($value, $query, $entry, $fieldName)
+    {
+        if (
+            trim($value) == static::$concatSeparator
+            || strpos($value, static::$concatSeparator) === false
+
+        ) return array();
+
+        return explode(static::$concatSeparator, $value);
+    }
+
+    /**
+     * Подмена встроенного запроса на модифицированный
+     *
+     * @return Query
+     */
     public static function query()
     {
         return new Query(static::getEntity());

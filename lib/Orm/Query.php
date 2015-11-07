@@ -65,12 +65,35 @@ class Query extends \Bitrix\Main\Entity\Query
 
     private function searchIblocks()
     {
-        array_walk_recursive($this->filter, array($this, 'checkForIblockData'));
+        $i = new \RecursiveArrayIterator(array($this->filter));
+        iterator_apply($i, array($this, 'recursiveScan'), array($i));
         return !empty($this->iblockPrimary);
     }
 
-    private function checkForIblockData($value, $key)
+    private function recursiveScan(\RecursiveArrayIterator $iterator)
     {
+        while ( $iterator->valid() )
+        {
+            $this->checkIblockData($iterator);
+
+            if ( $iterator->hasChildren() )
+            {
+                $this->recursiveScan($iterator->getChildren());
+            }
+            else
+            {
+                $this->checkIblockData($iterator);
+            }
+
+            $iterator->next();
+        }
+    }
+
+    private function checkIblockData(\Iterator $iterator)
+    {
+        $key = $iterator->key();
+        $value = $iterator->current();
+
         if (strpos($key, 'IBLOCK_ID') !== false || strpos($key, 'IBLOCK_CODE') !== false)
         {
             if (is_array($value))

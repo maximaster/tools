@@ -58,6 +58,11 @@ class ElementPropertyTable extends Entity\DataManager
                 'data_type' => 'string',
                 'title' => 'Описание значения свойства',
             ),
+            new Entity\ReferenceField(
+                'PROPERTY',
+                '\Bitrix\Iblock\Property',
+                array('this.IBLOCK_PROPERTY_ID' => 'ref.ID')
+            ),
         );
 
         return $map;
