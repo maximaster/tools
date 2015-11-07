@@ -220,4 +220,19 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
     {
         return new Query(static::getEntity());
     }
+
+    public static function add(array $data)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    public static function update($primary, array $data)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    public static function delete($primary)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
 }
