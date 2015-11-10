@@ -25,7 +25,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
 
         $map = parent::getMap();
 
-        foreach (self::getAdditionalMap() as $mapItem)
+        foreach (self::getAdditionalMap() as $key => $mapItem)
         {
             $map[] = $mapItem;
         }
@@ -68,18 +68,21 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             $singleProp = ElementPropertyTable::getEntity()->getDataClass();
         }
 
-        foreach ($props as $code => $prop)
+        foreach ($props as $propCode => $prop)
         {
-            if (is_numeric($code)) continue;
+            if (is_numeric($propCode)) continue;
 
-            $isMultiple     = $prop['MULTIPLE'] == 'Y';
-            $useDescription = $prop['WITH_DESCRIPTION'] == 'Y';
-            $isNewMultiple  = $isMultiple && !$isOldProps;
-            $valueKey       = "PROPERTY_{$code}_VALUE";
-            $descriptionKey = "PROPERTY_{$code}_DESCRIPTION";
-            $concatSubquery = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
-            $propertyEntity = null;
-            $valueColumn    = 'VALUE';
+            $propId                 = $prop['ID'];
+            $isMultiple             = $prop['MULTIPLE'] == 'Y';
+            $useDescription         = $prop['WITH_DESCRIPTION'] == 'Y';
+            $isNewMultiple          = $isMultiple && !$isOldProps;
+
+            $propTableEntityName            = "PROPERTY_{$propId}";
+            $propValueEntityName            = "PROPERTY_{$propCode}";
+            $propValueShortcut              = "PROPERTY_{$propCode}_VALUE";
+            $propValueDescriptionShortcut   = "PROPERTY_{$propCode}_DESCRIPTION";
+            $concatSubquery                 = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
+            $propValueColumn                = 'VALUE';
 
             /*switch ($prop['PROPERTY_TYPE'])
             {
@@ -93,14 +96,27 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             if ($isOldProps || $isMultiple)
             {
                 /**
-                 * Для инфоблоков 1.0 нужно цеплять на каждое значение по одной сущности
+                 * TODO Цепляем либо таблицу со значением, либо связанную сущность
                  */
-                $propertyEntity = new Entity\ReferenceField(
-                    'PROPERTY_' . $code,
+                $map[ $propTableEntityName ] = new Entity\ReferenceField(
+                    $propTableEntityName,
                     $isNewMultiple ? $multipleProp : $singleProp,
                     array(
                         '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
-                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $prop['ID'])
+                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $propId)
+                    ),
+                    array('join_type' => 'LEFT')
+                );
+
+                /**
+                 * Цепляем таблицу со значением свойства
+                 */
+                $map[ $propValueEntityName ] = new Entity\ReferenceField(
+                    $propValueEntityName,
+                    $isNewMultiple ? $multipleProp : $singleProp,
+                    array(
+                        '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
+                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $propId)
                     ),
                     array('join_type' => 'LEFT')
                 );
@@ -109,12 +125,16 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                  * Делаем быстрый доступ для значения свойства
                  */
                 $e = new Entity\ExpressionField(
-                    $valueKey,
+                    $propValueShortcut,
                     $isMultiple ? $concatSubquery : '%s',
-                    "PROPERTY_{$code}.{$valueColumn}"
+                    "{$propTableEntityName}.{$propValueColumn}"
                 );
+
+                /**
+                 * Модификатор для множественных значений
+                 */
                 if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
-                $map[ $valueKey ] = $e;
+                $map[ $propValueShortcut ] = $e;
 
                 /**
                  * И для его описания, если оно есть
@@ -122,12 +142,13 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                 if ($useDescription)
                 {
                     $e = new Entity\ExpressionField(
-                        $descriptionKey,
+                        $propValueDescriptionShortcut,
                         $isMultiple ? $concatSubquery : '%s',
-                        "PROPERTY_{$code}.DESCRIPTION"
+                        "{$propTableEntityName}.DESCRIPTION"
                     );
+
                     if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
-                    $map[ $descriptionKey ] = $e;
+                    $map[ $propValueDescriptionShortcut ] = $e;
                 }
             }
             else
@@ -137,7 +158,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                  */
                 if (!$singlePropTableLinked)
                 {
-                    $propertyEntity = new Entity\ReferenceField(
+                    $map[ $singlePropsEntityName ] = new Entity\ReferenceField(
                         $singlePropsEntityName,
                         $singleProp,
                         array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
@@ -146,33 +167,52 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
 
                     $singlePropTableLinked = true;
                 }
-                else
+
+                /**
+                 * TODO Цепляем либо таблицу со значением, либо связанную сущность
+                 */
+                $map[ $propValueEntityName ] = new Entity\ReferenceField(
+                    $propValueEntityName,
+                    $singleProp,
+                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
+                    array('join_type' => 'LEFT')
+                );
+
+                /**
+                 * Цепляем таблицу со значением свойства. Она уже подцеплена, но для совместимости...
+                 */
+                $map[ $propTableEntityName ] = new Entity\ReferenceField(
+                    $propTableEntityName,
+                    $singleProp,
+                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
+                    array('join_type' => 'LEFT')
+                );
+
+                /**
+                 * Делаем быстрый доступ для значения свойства
+                 */
+                $map[ $propValueShortcut ] = new Entity\ExpressionField(
+                    $propValueShortcut,
+                    '%s',
+                    "{$propTableEntityName}.{$propCode}"
+                );
+
+                /**
+                 * И для его описания, если оно есть
+                 */
+                if ($useDescription)
                 {
-                    $map[ $valueKey ] = new Entity\ExpressionField(
-                        $valueKey,
+                    $map[ $propValueDescriptionShortcut ] = new Entity\ExpressionField(
+                        $propValueDescriptionShortcut,
                         '%s',
-                        "{$singlePropsEntityName}.{$prop['CODE']}"
+                        "{$propTableEntityName}.{$propCode}_DESCRIPTION"
                     );
-
-                    if ($useDescription)
-                    {
-                        $map[ $descriptionKey ] = new Entity\ExpressionField(
-                            $descriptionKey,
-                            '%s',
-                            "{$singlePropsEntityName}.{$prop['CODE']}_DESCRIPTION"
-                        );
-                    }
                 }
-            }
-
-            if ($propertyEntity !== null)
-            {
-                $map[ $propertyEntity->getName() ] = $propertyEntity;
             }
         }
 
         /**
-         * Добавим DATAIL_PAGE_URL
+         * Добавим DETAIL_PAGE_URL
          */
         $e = new Entity\ExpressionField('DETAIL_PAGE_URL', '%s', 'IBLOCK.DETAIL_PAGE_URL');
         $e->addFetchDataModifier(function($value, $query, $entry, $fieldName)
