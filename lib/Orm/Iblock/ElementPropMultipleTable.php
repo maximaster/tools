@@ -83,7 +83,7 @@ abstract class ElementPropMultipleTable extends Entity\DataManager
 
     private static function compileEntity()
     {
-        $class = Entity\Base::snake2camel(static::$iblockCode) . 'MultiplePropertyTable';
+        $class = 'Iblock' . static::$iblockId . 'MultiplePropertyTable';
         if (!class_exists($class))
         {
             $eval = "class {$class} extends " . __CLASS__ . "{}";

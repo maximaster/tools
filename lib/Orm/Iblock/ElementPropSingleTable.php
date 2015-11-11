@@ -36,7 +36,7 @@ class ElementPropSingleTable extends Entity\DataManager
 
             switch ($prop['PROPERTY_TYPE']) {
                 case 'N':
-                    $mapItem = new Entity\FloatField($code, array(
+                    $mapItem = new Entity\FloatField('PROPERTY_' . $id, array(
                         'column_name' => 'PROPERTY_' . $id,
                     ));
                     break;
@@ -44,16 +44,17 @@ class ElementPropSingleTable extends Entity\DataManager
                 case 'L':
                 case 'E':
                 case 'G':
-                    $mapItem = new Entity\IntegerField($code, array(
-                        'column_name' => 'PROPERTY_' . $id,
+                    $mapItem = new Entity\IntegerField('PROPERTY_' . $id, array(
+                        'column_name' => 'PROPERTY_' . $id
                     ));
                     break;
 
                 case 'S':
                 default:
-                    $mapItem = new Entity\StringField($code, array(
+                    $mapItem = new Entity\StringField('PROPERTY_' . $id, array(
                         'column_name' => 'PROPERTY_' . $id,
                     ));
+
                     break;
             }
 
@@ -61,7 +62,7 @@ class ElementPropSingleTable extends Entity\DataManager
 
             if ($prop['WITH_DESCRIPTION'] == 'Y')
             {
-                $map[ $code . '_DESCRIPTION' ] = new Entity\StringField($code . '_DESCRIPTION', array(
+                $map[ 'DESCRIPTION_' . $id ] = new Entity\StringField('DESCRIPTION_' . $id, array(
                     'column_name' => 'DESCRIPTION_' . $id,
                 ));
             }
@@ -92,7 +93,7 @@ class ElementPropSingleTable extends Entity\DataManager
 
     private static function compileEntity()
     {
-        $class = Base::snake2camel(static::$iblockCode) . 'SinglePropertyTable';
+        $class = 'Iblock' . static::$iblockId . 'SinglePropertyTable';
         if (!class_exists($class))
         {
             $eval = "class {$class} extends " . __CLASS__ . "{}";

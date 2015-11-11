@@ -11,8 +11,7 @@ use Mx\Tools\Orm\Query;
 
 class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
 {
-
-    private static $concatSeparator = '|<-separator->|';
+    protected static $concatSeparator = '|<-separator->|';
 
     public static function getIblockId()
     {
@@ -77,7 +76,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             $useDescription         = $prop['WITH_DESCRIPTION'] == 'Y';
             $isNewMultiple          = $isMultiple && !$isOldProps;
 
-            $propTableEntityName            = "PROPERTY_{$propId}";
+            $propTableEntityName            = "PROPERTY_{$propCode}";
             $propValueEntityName            = "PROPERTY_{$propCode}";
             $propValueShortcut              = "PROPERTY_{$propCode}_VALUE";
             $propValueDescriptionShortcut   = "PROPERTY_{$propCode}_DESCRIPTION";
@@ -96,23 +95,10 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             if ($isOldProps || $isMultiple)
             {
                 /**
-                 * TODO Цепляем либо таблицу со значением, либо связанную сущность
+                 * Цепляем таблицу со значением свойства
                  */
                 $map[ $propTableEntityName ] = new Entity\ReferenceField(
                     $propTableEntityName,
-                    $isNewMultiple ? $multipleProp : $singleProp,
-                    array(
-                        '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
-                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $propId)
-                    ),
-                    array('join_type' => 'LEFT')
-                );
-
-                /**
-                 * Цепляем таблицу со значением свойства
-                 */
-                $map[ $propValueEntityName ] = new Entity\ReferenceField(
-                    $propValueEntityName,
                     $isNewMultiple ? $multipleProp : $singleProp,
                     array(
                         '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
@@ -169,16 +155,6 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                 }
 
                 /**
-                 * TODO Цепляем либо таблицу со значением, либо связанную сущность
-                 */
-                $map[ $propValueEntityName ] = new Entity\ReferenceField(
-                    $propValueEntityName,
-                    $singleProp,
-                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
-                    array('join_type' => 'LEFT')
-                );
-
-                /**
                  * Цепляем таблицу со значением свойства. Она уже подцеплена, но для совместимости...
                  */
                 $map[ $propTableEntityName ] = new Entity\ReferenceField(
@@ -194,7 +170,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                 $map[ $propValueShortcut ] = new Entity\ExpressionField(
                     $propValueShortcut,
                     '%s',
-                    "{$propTableEntityName}.{$propCode}"
+                    "{$singlePropsEntityName}.PROPERTY_{$propId}"
                 );
 
                 /**
@@ -205,7 +181,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                     $map[ $propValueDescriptionShortcut ] = new Entity\ExpressionField(
                         $propValueDescriptionShortcut,
                         '%s',
-                        "{$propTableEntityName}.{$propCode}_DESCRIPTION"
+                        "{$propTableEntityName}.DESCRIPTION_{$propId}"
                     );
                 }
             }
