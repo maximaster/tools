@@ -118,16 +118,17 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                     else
                     {
                         $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
-
+                        $entityName = '\\' . __CLASS__;
                         if ($prop['LINK_IBLOCK_ID'])
                         {
+                            $entityName = self::compileEntity($prop['LINK_IBLOCK_ID'])->getDataClass();
                             $valueReference['=ref.IBLOCK_ID'] = new SqlExpression('?i', $prop['LINK_IBLOCK_ID']);
                         }
 
                         //TODO Нужно добавить компилляцию своего ElementTable под инфоблок и цеплять его сюда
                         $valueEntity = new Entity\ReferenceField(
                             $propValueShortcut,
-                            '\Bitrix\Iblock\ElementTable',
+                            $entityName,
                             $valueReference
                         );
                     }
