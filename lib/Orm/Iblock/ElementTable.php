@@ -2,6 +2,7 @@
 
 namespace Mx\Tools\Orm\Iblock;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
 use Mx\Tools\Helpers\IblockStructure;
@@ -351,5 +352,34 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
     public static function delete($primary)
     {
         throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    /**
+     * @param $iblockId
+     * @return Entity\Base
+     * @throws ArgumentException
+     */
+    public static function compileEntity($iblockId)
+    {
+        $meta = IblockStructure::full($iblockId);
+        if (!$meta)
+        {
+            throw new ArgumentException('Указан несуществующий идентификатор инфоблока');
+        }
+
+        $entityName = "Iblock" . Entity\Base::snake2camel($iblockId) . "ElementTable";
+        $fullEntityName = '\\' . __NAMESPACE__ . '\\' . $entityName;
+
+        $code = "
+            namespace "  . __NAMESPACE__ . ";
+            class {$entityName} extends ElementTable {
+                public static function getIblockId(){
+                    return {$meta['iblock']['ID']};
+                }
+            }
+        ";
+        if (!class_exists($fullEntityName)) eval($code);
+
+        return Entity\Base::getInstance($fullEntityName);
     }
 }
