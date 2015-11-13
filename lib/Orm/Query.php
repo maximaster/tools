@@ -7,13 +7,13 @@ use Mx\Tools\Interfaces\IblockElementTableInterface;
 use Mx\Tools\Orm\Iblock\ElementTable;
 
 /**
- * Р Р°СЃС€РёСЂРµРЅРЅС‹Р№ РєР»Р°СЃСЃ Р·Р°РїСЂРѕСЃР°, РєРѕС‚РѕСЂС‹Р№ РјРѕР¶РµС‚ РґРѕР±Р°РІРёС‚СЊ РїРѕР»СЏ РІ СЃСѓС‰РЅРѕСЃС‚СЊ РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё
+ * Расширенный класс запроса, который может добавить поля в сущность при необходимости
  * @package Mx\Tools\Orm
  */
 class Query extends \Bitrix\Main\Entity\Query
 {
     /**
-     * @var array РњР°СЃСЃРёРІ СЃ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°РјРё Рё РєРѕРґР°РјРё РёРЅС„РѕР±Р»РѕРєРѕРІ
+     * @var array Массив с идентификаторами и кодами инфоблоков
      */
     private $iblockPrimary = array();
     private $useIblockSearch = null;
@@ -43,6 +43,9 @@ class Query extends \Bitrix\Main\Entity\Query
         return parent::buildQuery();
     }
 
+    /**
+     * Метод инициализирует поиск данных, связанных с инфоблоками и начинает добавление свойств к списку возможных
+     */
     private function appendIblockRelatedData()
     {
         if ($this->searchIblocks())
@@ -62,12 +65,35 @@ class Query extends \Bitrix\Main\Entity\Query
 
     private function searchIblocks()
     {
-        array_walk_recursive($this->filter, array($this, 'checkForIblockData'));
+        $i = new \RecursiveArrayIterator(array($this->filter));
+        iterator_apply($i, array($this, 'recursiveScan'), array($i));
         return !empty($this->iblockPrimary);
     }
 
-    private function checkForIblockData($value, $key)
+    private function recursiveScan(\RecursiveArrayIterator $iterator)
     {
+        while ( $iterator->valid() )
+        {
+            $this->checkIblockData($iterator);
+
+            if ( $iterator->hasChildren() )
+            {
+                $this->recursiveScan($iterator->getChildren());
+            }
+            else
+            {
+                $this->checkIblockData($iterator);
+            }
+
+            $iterator->next();
+        }
+    }
+
+    private function checkIblockData(\Iterator $iterator)
+    {
+        $key = $iterator->key();
+        $value = $iterator->current();
+
         if (strpos($key, 'IBLOCK_ID') !== false || strpos($key, 'IBLOCK_CODE') !== false)
         {
             if (is_array($value))
@@ -94,7 +120,7 @@ class Query extends \Bitrix\Main\Entity\Query
         $maps = func_get_args();
         if (count($maps) === 0) return;
 
-        //TODO РџСЂРѕРІРµСЂРёС‚СЊ РЅР° РїРѕРІС‚РѕСЂСЏСЋС‰РёРµСЃСЏ СЃРІРѕР№СЃС‚РІР° Рё СЃСѓС‰РЅРѕСЃС‚Рё, С‚.Рє. Р·Р°РїСЂРѕСЃ РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РґР»СЏ РґРІСѓС… РёРЅС„РѕР±Р»РѕРєРѕРІ
+        //TODO Проверить на повторяющиеся свойства и сущности, т.к. запрос может вызываться для двух инфоблоков
         foreach ($maps as $map)
         {
             foreach ($map as $field)

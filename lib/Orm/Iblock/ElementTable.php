@@ -11,6 +11,8 @@ use Mx\Tools\Orm\Query;
 
 class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
 {
+    protected static $concatSeparator = '|<-separator->|';
+
     public static function getIblockId()
     {
         return null;
@@ -22,7 +24,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
 
         $map = parent::getMap();
 
-        foreach (self::getAdditionalMap() as $mapItem)
+        foreach (self::getAdditionalMap() as $key => $mapItem)
         {
             $map[] = $mapItem;
         }
@@ -50,107 +52,203 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
 
         if (empty($props)) return $map;
 
-        $oldProps = $iblock['VERSION'] == 1;
+        $isOldProps = $iblock['VERSION'] == 1;
 
-        if (!$oldProps)
+        $singlePropTableLinked = false;
+        $singlePropsEntityName = "PROPERTY_TABLE_IBLOCK_{$iblock['ID']}";
+
+        if (!$isOldProps)
         {
             $singleProp = ElementPropSingleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
-            //$multipleProp = ElementPropMultipleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
+            $multipleProp = ElementPropMultipleTable::getInstance($iblock['CODE'])->getEntity()->getDataClass();
         }
         else
         {
             $singleProp = ElementPropertyTable::getEntity()->getDataClass();
         }
 
-        foreach ($props as $code => $prop)
+        foreach ($props as $propCode => $prop)
         {
-            if (is_numeric($code)) continue;
+            if (is_numeric($propCode)) continue;
 
-            $isMultiple = $prop['MULTIPLE'] == 'Y';
-            if ($isMultiple) continue;
+            $propId                 = $prop['ID'];
+            $isMultiple             = $prop['MULTIPLE'] == 'Y';
+            $useDescription         = $prop['WITH_DESCRIPTION'] == 'Y';
+            $isNewMultiple          = $isMultiple && !$isOldProps;
 
-            $valueKey = "PROPERTY_{$code}_VALUE";
-            $descriptionKey = "PROPERTY_{$code}_DESCRIPTION";
+            $propTableEntityName            = "PROPERTY_{$propCode}";
+            $propValueEntityName            = "PROPERTY_{$propCode}";
+            $propValueShortcut              = "PROPERTY_{$propCode}_VALUE";
+            $propValueDescriptionShortcut   = "PROPERTY_{$propCode}_DESCRIPTION";
+            $concatSubquery                 = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
+            $propValueColumn                = 'VALUE';
 
-            $propertyEntity = null;
-
-            if ($oldProps)
+            /*switch ($prop['PROPERTY_TYPE'])
             {
-                switch ($prop['PROPERTY_TYPE'])
-                {
-                    case 'N':
-                    case 'E':
-                    case 'G':
-                        $column = 'VALUE_NUM';
-                        break;
-                    case 'L':
-                    case 'S':
-                    default:
-                        $column = 'VALUE';
-                        break;
-                }
+                case 'N': case 'E': case 'G':   $valueColumn = 'VALUE_NUM';  break;
+                case 'L': case 'S': default:    $valueColumn = 'VALUE';      break;
+            }*/
 
-                $propertyEntity = new Entity\ReferenceField(
-                    'PROPERTY_' . $code,
-                    $singleProp,
+            /**
+             * Для всех свойств, кроме одиночных 2.0
+             */
+            if ($isOldProps || $isMultiple)
+            {
+                /**
+                 * Цепляем таблицу со значением свойства
+                 */
+                $map[ $propTableEntityName ] = new Entity\ReferenceField(
+                    $propTableEntityName,
+                    $isNewMultiple ? $multipleProp : $singleProp,
                     array(
                         '=ref.IBLOCK_ELEMENT_ID' => 'this.ID',
-                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $prop['ID'])
+                        '=ref.IBLOCK_PROPERTY_ID' => new SqlExpression('?i', $propId)
                     ),
                     array('join_type' => 'LEFT')
                 );
 
-                $map[ $valueKey ] = new Entity\ExpressionField(
-                    $valueKey,
-                    '%s',
-                    "PROPERTY_{$code}.{$column}"
+                /**
+                 * Делаем быстрый доступ для значения свойства
+                 */
+                $e = new Entity\ExpressionField(
+                    $propValueShortcut,
+                    $isMultiple ? $concatSubquery : '%s',
+                    "{$propTableEntityName}.{$propValueColumn}"
                 );
 
-                if ($prop['WITH_DESCRIPTION'] == 'Y')
+                /**
+                 * Модификатор для множественных значений
+                 */
+                if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                $map[ $propValueShortcut ] = $e;
+
+                /**
+                 * И для его описания, если оно есть
+                 */
+                if ($useDescription)
                 {
-                    $map[ $descriptionKey ] = new Entity\ExpressionField(
-                        $descriptionKey,
-                        '%s',
-                        "PROPERTY_{$code}.DESCRIPTION"
+                    $e = new Entity\ExpressionField(
+                        $propValueDescriptionShortcut,
+                        $isMultiple ? $concatSubquery : '%s',
+                        "{$propTableEntityName}.DESCRIPTION"
                     );
+
+                    if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                    $map[ $propValueDescriptionShortcut ] = $e;
                 }
             }
             else
             {
-                $propertyEntity = new Entity\ReferenceField(
-                    'PROPERTY_' . $code,
+                /**
+                 * Для не множественных свойств 2.0 цепляем только одну сущность
+                 */
+                if (!$singlePropTableLinked)
+                {
+                    $map[ $singlePropsEntityName ] = new Entity\ReferenceField(
+                        $singlePropsEntityName,
+                        $singleProp,
+                        array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
+                        array('join_type' => 'LEFT')
+                    );
+
+                    $singlePropTableLinked = true;
+                }
+
+                /**
+                 * Цепляем таблицу со значением свойства. Она уже подцеплена, но для совместимости...
+                 */
+                $map[ $propTableEntityName ] = new Entity\ReferenceField(
+                    $propTableEntityName,
                     $singleProp,
                     array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
                     array('join_type' => 'LEFT')
                 );
 
-                $map[ $valueKey ] = new Entity\ExpressionField(
-                    $valueKey,
+                /**
+                 * Делаем быстрый доступ для значения свойства
+                 */
+                $map[ $propValueShortcut ] = new Entity\ExpressionField(
+                    $propValueShortcut,
                     '%s',
-                    "PROPERTY_{$code}.{$prop['CODE']}"
+                    "{$singlePropsEntityName}.PROPERTY_{$propId}"
                 );
 
-                if ($prop['WITH_DESCRIPTION'] == 'Y')
+                /**
+                 * И для его описания, если оно есть
+                 */
+                if ($useDescription)
                 {
-                    $map[ $descriptionKey ] = new Entity\ExpressionField(
-                        $descriptionKey,
+                    $map[ $propValueDescriptionShortcut ] = new Entity\ExpressionField(
+                        $propValueDescriptionShortcut,
                         '%s',
-                        "PROPERTY_{$code}.{$prop['CODE']}_DESCRIPTION"
+                        "{$propTableEntityName}.DESCRIPTION_{$propId}"
                     );
                 }
             }
-
-            if ($propertyEntity !== null)
-            {
-                $map[ $propertyEntity->getName() ] = $propertyEntity;
-            }
         }
+
+        /**
+         * Добавим DETAIL_PAGE_URL
+         */
+        $e = new Entity\ExpressionField('DETAIL_PAGE_URL', '%s', 'IBLOCK.DETAIL_PAGE_URL');
+        $e->addFetchDataModifier(function($value, $query, $entry, $fieldName)
+        {
+            $search = array();
+            $replace = array();
+            foreach ($entry as $key => $val)
+            {
+                $search[] = "#{$key}#";
+                $replace[] = $val;
+            }
+            return str_replace($search, $replace, $value);
+        });
+        $map['DETAIL_PAGE_URL'] = $e;
 
         return $map;
     }
 
+    /**
+     * Модификатор данных для множественных свойств. Разрезает строку со сгруппированным значением множественных свойств
+     *
+     * @param $value
+     * @param $query
+     * @param $entry
+     * @param $fieldName
+     * @return array
+     */
+    public static function multiValuesDataModifier($value, $query, $entry, $fieldName)
+    {
+        if (
+            trim($value) == static::$concatSeparator
+            || strpos($value, static::$concatSeparator) === false
+
+        ) return array();
+
+        return explode(static::$concatSeparator, $value);
+    }
+
+    /**
+     * Подмена встроенного запроса на модифицированный
+     *
+     * @return Query
+     */
     public static function query()
     {
         return new Query(static::getEntity());
+    }
+
+    public static function add(array $data)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    public static function update($primary, array $data)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    public static function delete($primary)
+    {
+        throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
     }
 }

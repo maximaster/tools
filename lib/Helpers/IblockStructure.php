@@ -10,6 +10,11 @@ class IblockStructure
 {
     public static function iblock($primary)
     {
+        if (!$primary)
+        {
+            throw new ArgumentException('Не указан идентификатор инфоблока');
+        }
+
         $cache = new \CPHPCache();
 
         $cacheId = md5($primary);
@@ -47,6 +52,11 @@ class IblockStructure
 
     public static function properties($primary)
     {
+        if (!$primary)
+        {
+            throw new ArgumentException('Не указан идентификатор инфоблока');
+        }
+
         $cache = new \CPHPCache();
 
         $cacheId = md5($primary);
