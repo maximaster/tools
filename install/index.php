@@ -1,7 +1,7 @@
 <?
-class mx_tools extends \CModule
+class maximaster_tools extends \CModule
 {
-    const MODULE_ID = 'mx.tools';
+    const MODULE_ID = 'maximaster.tools';
 
     function __construct()
     {

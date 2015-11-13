@@ -1,6 +1,6 @@
 <?php
 
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 
 class PropertyEnumTable
 {

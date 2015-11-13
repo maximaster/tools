@@ -1,8 +1,8 @@
 <?
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 use Bitrix\Main\Entity;
 use Bitrix\Main;
-use Mx\Tools\Helpers\IblockStructure;
+use Maximaster\Tools\Helpers\IblockStructure;
 
 abstract class ElementPropMultipleTable extends Entity\DataManager
 {

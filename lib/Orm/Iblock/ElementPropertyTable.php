@@ -1,6 +1,6 @@
 <?php
 
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 
 use Bitrix\Main\Entity;
 
@@ -32,12 +32,6 @@ class ElementPropertyTable extends Entity\DataManager
                 'data_type' => 'Bitrix\Iblock\PropertyTable',
                 'reference' => array('=this.IBLOCK_PROPERTY_ID' => 'ref.ID'),
             ),
-            //TODO Связать именно с той сущностью, которая относится к конкретному инфоблоку
-            //чтобы была возможность чайнить связи из значений свойств
-            /*'ELEMENT' => array(
-                'data_type' => 'Mx\Tools\Orm\Iblock\ElementTable',
-                'reference' => array('=this.IBLOCK_ELEMENT_ID' => 'ref.ID'),
-            ),*/
             'VALUE' => array(
                 'data_type' => 'string',
                 'title' => 'Значение свойства',

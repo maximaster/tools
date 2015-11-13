@@ -1,8 +1,8 @@
 <?php
 
-namespace Mx\Tools\Events;
+namespace Maximaster\Tools\Events;
 
-use Mx\Tools\Psr4Autoloader;
+use Maximaster\Tools\Psr4Autoloader;
 
 class Listener extends Psr4Autoloader
 {

@@ -1,20 +1,20 @@
 <?php
 
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
-use Mx\Tools\Helpers\IblockStructure;
-use Mx\Tools\Interfaces\IblockElementTableInterface;
-use Mx\Tools\Orm\Query;
+use Maximaster\Tools\Helpers\IblockStructure;
+use Maximaster\Tools\Interfaces\IblockElementTableInterface;
+use Maximaster\Tools\Orm\Query;
 
 
 class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
 {
     protected static $concatSeparator = '|<-separator->|';
 
-    public static function getIblockId()
+    public static function getIblockId  ()
     {
         return null;
     }
