@@ -1,6 +1,6 @@
 <?php
 
-namespace Mx\Tools\Events;
+namespace Maximaster\Tools\Events;
 
 class Base
 {

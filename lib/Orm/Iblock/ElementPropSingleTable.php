@@ -1,11 +1,11 @@
 <?php
 
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity;
-use Mx\Tools\Helpers\IblockStructure;
+use Maximaster\Tools\Helpers\IblockStructure;
 
 class ElementPropSingleTable extends Entity\DataManager
 {

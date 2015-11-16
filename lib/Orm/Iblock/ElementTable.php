@@ -1,19 +1,20 @@
 <?php
 
-namespace Mx\Tools\Orm\Iblock;
+namespace Maximaster\Tools\Orm\Iblock;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
-use Mx\Tools\Helpers\IblockStructure;
-use Mx\Tools\Interfaces\IblockElementTableInterface;
-use Mx\Tools\Orm\Query;
+use Maximaster\Tools\Helpers\IblockStructure;
+use Maximaster\Tools\Interfaces\IblockElementTableInterface;
+use Maximaster\Tools\Orm\Query;
 
 
 class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
 {
     protected static $concatSeparator = '|<-separator->|';
 
-    public static function getIblockId()
+    public static function getIblockId  ()
     {
         return null;
     }
@@ -77,17 +78,125 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             $isNewMultiple          = $isMultiple && !$isOldProps;
 
             $propTableEntityName            = "PROPERTY_{$propCode}";
-            $propValueEntityName            = "PROPERTY_{$propCode}";
             $propValueShortcut              = "PROPERTY_{$propCode}_VALUE";
             $propValueDescriptionShortcut   = "PROPERTY_{$propCode}_DESCRIPTION";
             $concatSubquery                 = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
-            $propValueColumn                = 'VALUE';
+            $propValueColumn                = $isMultiple || $isOldProps ? 'VALUE' : "PROPERTY_{$propId}";
+            $valueReference = $valueEntity = $fieldReference = null;
 
-            /*switch ($prop['PROPERTY_TYPE'])
+            /**
+             * Для не множественных свойств 2.0 цепляем только одну сущность
+             */
+            if (!$isOldProps && !$isMultiple)
             {
-                case 'N': case 'E': case 'G':   $valueColumn = 'VALUE_NUM';  break;
-                case 'L': case 'S': default:    $valueColumn = 'VALUE';      break;
-            }*/
+                $map[ $singlePropsEntityName ] = new Entity\ReferenceField(
+                    $singlePropsEntityName,
+                    $singleProp,
+                    array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
+                    array('join_type' => 'LEFT')
+                );
+
+                $singlePropTableLinked = true;
+            }
+
+            $realValueStorage = !$isOldProps && !$isMultiple ?
+                "{$singlePropsEntityName}.{$propValueColumn}" :
+                "{$propTableEntityName}.{$propValueColumn}";
+
+            switch ($prop['PROPERTY_TYPE'])
+            {
+                case 'E':
+
+                    if ($isMultiple)
+                    {
+                        $valueEntity = new Entity\ExpressionField(
+                            $propValueShortcut,
+                            $isMultiple ? $concatSubquery : '%s',
+                            $realValueStorage
+                        );
+                    }
+                    else
+                    {
+                        $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
+                        $entityName = '\\' . __CLASS__;
+                        if ($prop['LINK_IBLOCK_ID'])
+                        {
+                            $entityName = self::compileEntity($prop['LINK_IBLOCK_ID'])->getDataClass();
+                            $valueReference['=ref.IBLOCK_ID'] = new SqlExpression('?i', $prop['LINK_IBLOCK_ID']);
+                        }
+
+                        //TODO Нужно добавить компилляцию своего ElementTable под инфоблок и цеплять его сюда
+                        $valueEntity = new Entity\ReferenceField(
+                            $propValueShortcut,
+                            $entityName,
+                            $valueReference
+                        );
+                    }
+
+                    break;
+                case 'G':
+                    if ($isMultiple)
+                    {
+                        $valueEntity = new Entity\ExpressionField(
+                            $propValueShortcut,
+                            $isMultiple ? $concatSubquery : '%s',
+                            $realValueStorage
+                        );
+                        $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                    }
+                    else
+                    {
+                        $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
+
+                        if ($prop['LINK_IBLOCK_ID'])
+                        {
+                            $valueReference['=ref.IBLOCK_ID'] = new SqlExpression('?i', $prop['LINK_IBLOCK_ID']);
+                        }
+
+                        $valueEntity = new Entity\ReferenceField(
+                            $propValueShortcut,
+                            '\Bitrix\Iblock\SectionTable',
+                            $valueReference
+                        );
+                    }
+
+                    break;
+
+                case 'L':
+
+                    if ($isMultiple)
+                    {
+                        $valueEntity = new Entity\ExpressionField(
+                            $propValueShortcut,
+                            $isMultiple ? $concatSubquery : '%s',
+                            $realValueStorage
+                        );
+                        $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                    }
+                    else
+                    {
+                        $valueReference = array(
+                            '=this.ID' => 'ref.PROPERTY_ID',
+                            "=this.{$realValueStorage}" => 'ref.ID'
+                        );
+
+                        $valueEntity = new Entity\ReferenceField(
+                            $propValueShortcut,
+                            '\Bitrix\Iblock\PropertyEnumerationTable',
+                            $valueReference
+                        );
+                    }
+
+                    break;
+                case 'S': case 'N': default:
+                $valueEntity = new Entity\ExpressionField(
+                    $propValueShortcut,
+                    $isMultiple ? $concatSubquery : '%s',
+                    $realValueStorage
+                );
+
+                break;
+            }
 
             /**
              * Для всех свойств, кроме одиночных 2.0
@@ -108,19 +217,10 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                 );
 
                 /**
-                 * Делаем быстрый доступ для значения свойства
-                 */
-                $e = new Entity\ExpressionField(
-                    $propValueShortcut,
-                    $isMultiple ? $concatSubquery : '%s',
-                    "{$propTableEntityName}.{$propValueColumn}"
-                );
-
-                /**
                  * Модификатор для множественных значений
                  */
-                if ($isMultiple) $e->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
-                $map[ $propValueShortcut ] = $e;
+                if ($isMultiple) $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+                $map[ $propValueShortcut ] = $valueEntity;
 
                 /**
                  * И для его описания, если оно есть
@@ -140,21 +240,6 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             else
             {
                 /**
-                 * Для не множественных свойств 2.0 цепляем только одну сущность
-                 */
-                if (!$singlePropTableLinked)
-                {
-                    $map[ $singlePropsEntityName ] = new Entity\ReferenceField(
-                        $singlePropsEntityName,
-                        $singleProp,
-                        array('=ref.IBLOCK_ELEMENT_ID' => 'this.ID'),
-                        array('join_type' => 'LEFT')
-                    );
-
-                    $singlePropTableLinked = true;
-                }
-
-                /**
                  * Цепляем таблицу со значением свойства. Она уже подцеплена, но для совместимости...
                  */
                 $map[ $propTableEntityName ] = new Entity\ReferenceField(
@@ -167,11 +252,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                 /**
                  * Делаем быстрый доступ для значения свойства
                  */
-                $map[ $propValueShortcut ] = new Entity\ExpressionField(
-                    $propValueShortcut,
-                    '%s',
-                    "{$singlePropsEntityName}.PROPERTY_{$propId}"
-                );
+                $map[ $propValueShortcut ] = $valueEntity;
 
                 /**
                  * И для его описания, если оно есть
@@ -181,7 +262,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                     $map[ $propValueDescriptionShortcut ] = new Entity\ExpressionField(
                         $propValueDescriptionShortcut,
                         '%s',
-                        "{$propTableEntityName}.DESCRIPTION_{$propId}"
+                        "{$singlePropsEntityName}.DESCRIPTION_{$propId}"
                     );
                 }
             }
@@ -228,6 +309,28 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
     }
 
     /**
+     * @param array        $prop
+     * @param Entity\Field $tableField
+     * @return Entity\ExpressionField
+     */
+    private static function linkPropertyValue(array $prop, Entity\Field &$tableField)
+    {
+        $propValueShortcut = "PROPERTY_{$prop['CODE']}_VALUE";
+        $isMultiple = $prop['MULTIPLE'] == 'Y';
+        $isOldProps = $prop['VERSION'] == 2;
+        $concatSubquery = "GROUP_CONCAT(%s SEPARATOR '" .  static::$concatSeparator . "')";
+        $propValueColumn = $isMultiple || $isOldProps ? 'VALUE' : "PROPERTY_{$prop['ID']}";
+
+        $mapEntity = new Entity\ExpressionField(
+            $propValueShortcut,
+            $isMultiple ? $concatSubquery : '%s',
+            "{$tableField->getName()}.{$propValueColumn}"
+        );
+
+        return $mapEntity;
+    }
+
+    /**
      * Подмена встроенного запроса на модифицированный
      *
      * @return Query
@@ -250,5 +353,34 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
     public static function delete($primary)
     {
         throw new \LogicException('Используйте \\Bitrix\\Iblock\\ElementTable');
+    }
+
+    /**
+     * @param $iblockId
+     * @return Entity\Base
+     * @throws ArgumentException
+     */
+    public static function compileEntity($iblockId)
+    {
+        $meta = IblockStructure::full($iblockId);
+        if (!$meta)
+        {
+            throw new ArgumentException('Указан несуществующий идентификатор инфоблока');
+        }
+
+        $entityName = "Iblock" . Entity\Base::snake2camel($iblockId) . "ElementTable";
+        $fullEntityName = '\\' . __NAMESPACE__ . '\\' . $entityName;
+
+        $code = "
+            namespace "  . __NAMESPACE__ . ";
+            class {$entityName} extends ElementTable {
+                public static function getIblockId(){
+                    return {$meta['iblock']['ID']};
+                }
+            }
+        ";
+        if (!class_exists($fullEntityName)) eval($code);
+
+        return Entity\Base::getInstance($fullEntityName);
     }
 }

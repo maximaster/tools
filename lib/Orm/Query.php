@@ -1,14 +1,14 @@
 <?php
 
-namespace Mx\Tools\Orm;
+namespace Maximaster\Tools\Orm;
 
-use Mx\Tools\Helpers\IblockStructure;
-use Mx\Tools\Interfaces\IblockElementTableInterface;
-use Mx\Tools\Orm\Iblock\ElementTable;
+use Maximaster\Tools\Helpers\IblockStructure;
+use Maximaster\Tools\Interfaces\IblockElementTableInterface;
+use Maximaster\Tools\Orm\Iblock\ElementTable;
 
 /**
  * Расширенный класс запроса, который может добавить поля в сущность при необходимости
- * @package Mx\Tools\Orm
+ * @package Maximaster\Tools\Orm
  */
 class Query extends \Bitrix\Main\Entity\Query
 {
@@ -23,7 +23,7 @@ class Query extends \Bitrix\Main\Entity\Query
         if ($this->useIblockSearch !== null) return $this->useIblockSearch;
 
         $entityClass = $this->getEntity()->getDataClass();
-        $this->useIblockSearch = $entityClass === '\\Mx\\Tools\\Orm\\Iblock\\ElementTable';
+        $this->useIblockSearch = $entityClass === '\\Maximaster\\Tools\\Orm\\Iblock\\ElementTable';
 
         return $this->useIblockSearch;
     }

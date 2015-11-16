@@ -1,6 +1,6 @@
 <?php
 
-namespace Mx\Tools;
+namespace Maximaster\Tools;
 
 class Psr4Autoloader
 {

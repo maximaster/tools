@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Mx\Tools\Interfaces;
+namespace Maximaster\Tools\Interfaces;
 
 
 interface IblockElementTableInterface
