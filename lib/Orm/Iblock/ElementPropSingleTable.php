@@ -25,9 +25,10 @@ class ElementPropSingleTable extends Entity\DataManager
                 'primary' => true,
             )
         );
-        $meta = IblockStructure::full(static::$iblockCode);
+        $properties = IblockStructure::properties(static::$iblockCode);
+        if (!$properties) return $map;
 
-        foreach ($meta['properties'] as $prop)
+        foreach ($properties as $prop)
         {
             if ($prop['MULTIPLE'] == 'Y') continue;
 
@@ -78,8 +79,7 @@ class ElementPropSingleTable extends Entity\DataManager
      */
     public static function getInstance($iblockCode)
     {
-        $meta = IblockStructure::full($iblockCode);
-        $iblock = $meta['iblock'];
+        $iblock = IblockStructure::iblock($iblockCode);
         if (!$iblock)
         {
             throw new ArgumentException('Указан код несуществующего инфоблока');

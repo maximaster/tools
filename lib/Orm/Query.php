@@ -3,7 +3,7 @@
 namespace Maximaster\Tools\Orm;
 
 use Maximaster\Tools\Helpers\IblockStructure;
-use Maximaster\Tools\Interfaces\IblockElementTableInterface;
+use Maximaster\Tools\Interfaces\IblockRelatedTableInterface;
 use Maximaster\Tools\Orm\Iblock\ElementTable;
 
 /**

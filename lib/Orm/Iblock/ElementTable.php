@@ -6,15 +6,15 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
 use Maximaster\Tools\Helpers\IblockStructure;
-use Maximaster\Tools\Interfaces\IblockElementTableInterface;
+use Maximaster\Tools\Interfaces\IblockRelatedTableInterface;
 use Maximaster\Tools\Orm\Query;
 
 
-class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementTableInterface
+class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedTableInterface
 {
     protected static $concatSeparator = '|<-separator->|';
 
-    public static function getIblockId  ()
+    public static function getIblockId()
     {
         return null;
     }
@@ -46,10 +46,8 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
         $map = array();
         $iblockId = $iblockId === null ? static::getIblockId() : $iblockId;
 
-        $meta = IblockStructure::full($iblockId);
-
-        $iblock = $meta['iblock'];
-        $props = $meta['properties'];
+        $iblock = IblockStructure::iblock($iblockId);
+        $props = IblockStructure::properties($iblockId);
 
         if (empty($props)) return $map;
 
@@ -125,7 +123,6 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                             $valueReference['=ref.IBLOCK_ID'] = new SqlExpression('?i', $prop['LINK_IBLOCK_ID']);
                         }
 
-                        //TODO Нужно добавить компилляцию своего ElementTable под инфоблок и цеплять его сюда
                         $valueEntity = new Entity\ReferenceField(
                             $propValueShortcut,
                             $entityName,
@@ -146,16 +143,18 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
                     }
                     else
                     {
-                        $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
 
+                        $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
+                        $entityName = '\\Maximaster\\Tools\\Orm\\Iblock\\SectionTable';
                         if ($prop['LINK_IBLOCK_ID'])
                         {
+                            $entityName = $entityName::compileEntity($prop['LINK_IBLOCK_ID'])->getDataClass();
                             $valueReference['=ref.IBLOCK_ID'] = new SqlExpression('?i', $prop['LINK_IBLOCK_ID']);
                         }
 
                         $valueEntity = new Entity\ReferenceField(
                             $propValueShortcut,
-                            '\Bitrix\Iblock\SectionTable',
+                            $entityName,
                             $valueReference
                         );
                     }
@@ -362,8 +361,8 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
      */
     public static function compileEntity($iblockId)
     {
-        $meta = IblockStructure::full($iblockId);
-        if (!$meta)
+        $iblock = IblockStructure::iblock($iblockId);
+        if (!$iblock)
         {
             throw new ArgumentException('Указан несуществующий идентификатор инфоблока');
         }
@@ -375,7 +374,7 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockElementT
             namespace "  . __NAMESPACE__ . ";
             class {$entityName} extends ElementTable {
                 public static function getIblockId(){
-                    return {$meta['iblock']['ID']};
+                    return {$iblock['ID']};
                 }
             }
         ";

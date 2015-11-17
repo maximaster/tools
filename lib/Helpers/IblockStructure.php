@@ -16,9 +16,9 @@ class IblockStructure
         }
 
         $cache = new \CPHPCache();
-
+        $path = self::createPath(__METHOD__);
         $cacheId = md5($primary);
-        if ($cache->InitCache(86400, $cacheId, str_replace(array('\\', ':'), '/', __METHOD__)))
+        if ($cache->InitCache(86400, $cacheId, $path))
         {
             $iblock = $cache->GetVars();
         }
@@ -58,9 +58,9 @@ class IblockStructure
         }
 
         $cache = new \CPHPCache();
-
+        $path = self::createPath(__METHOD__);
         $cacheId = md5($primary);
-        if ($cache->InitCache(86400, $cacheId, str_replace(array('\\', ':'), '/', __METHOD__)))
+        if ($cache->InitCache(86400, $cacheId, $path))
         {
             $props = $cache->GetVars();
         }
@@ -96,11 +96,57 @@ class IblockStructure
         return $props;
     }
 
+    public static function sectionUFields($primary)
+    {
+        if (!$primary)
+        {
+            throw new ArgumentException('Не указан идентификатор инфоблока');
+        }
+
+        $cache = new \CPHPCache();
+        $path = self::createPath(__METHOD__);
+        $cacheId = md5($primary . $path);
+        if ($cache->InitCache(86400*2, $cacheId, $path))
+        {
+            $uFields = $cache->GetVars();
+        }
+        else
+        {
+            if (!is_numeric($primary))
+            {
+                $iblock = self::iblock($primary);
+                if (!$iblock)
+                {
+                    $cache->AbortDataCache();
+                    return null;
+                }
+
+                $primary = $iblock['ID'];
+            }
+
+            global $USER_FIELD_MANAGER;
+            $uFields = $USER_FIELD_MANAGER->getUserFields("IBLOCK_{$primary}_SECTION");
+
+            if ($cache->StartDataCache())
+            {
+                $cache->EndDataCache($uFields);
+            }
+        }
+
+        return $uFields;
+    }
+
     public static function full($primary)
     {
         return array(
             'iblock' => self::iblock($primary),
-            'properties' => self::properties($primary)
+            'properties' => self::properties($primary),
+            'sectionUserFields' => self::sectionUFields($primary),
         );
+    }
+
+    private static function createPath($string)
+    {
+        return str_replace(array('\\', ':'), '/', $string);
     }
 }
