@@ -14,6 +14,17 @@ class SectionTable extends \Bitrix\Iblock\SectionTable implements IblockRelatedT
         return null;
     }
 
+    public static function getUfId()
+    {
+        $iblockId = static::getIblockId();
+        if ($iblockId !== null)
+        {
+            return "IBLOCK_{$iblockId}_SECTION";
+        }
+
+        return null;
+    }
+
     public static function getMap()
     {
         if (static::getIblockId() === null) return parent::getMap();
@@ -35,35 +46,7 @@ class SectionTable extends \Bitrix\Iblock\SectionTable implements IblockRelatedT
         $iblockId = $iblockId === null ? static::getIblockId() : $iblockId;
 
         return $map;
-        
-        $uFields = IblockStructure::sectionUFields($iblockId);
 
-        if (!$uFields)
-            return $map;
-
-        global $USER_FIELD_MANAGER;
-
-        foreach ($uFields as $uField)
-        {
-            if ($uField['MULTIPLE'] == 'N')
-            {
-                // just add single field
-                $field = $USER_FIELD_MANAGER->getEntityField($uField, $uField['FIELD_NAME']);
-                $map[] = $field;
-
-                foreach ($USER_FIELD_MANAGER->getEntityReferences($uField, $field) as $reference)
-                {
-                    $map[] = $reference;
-                }
-            }
-            else
-            {
-                //TODO
-                continue;
-            }
-        }
-
-        return $map;
     }
 
     /**
@@ -87,6 +70,9 @@ class SectionTable extends \Bitrix\Iblock\SectionTable implements IblockRelatedT
             class {$entityName} extends SectionTable {
                 public static function getIblockId(){
                     return {$iblock['ID']};
+                }
+                public static function getUfId(){
+                    return 'IBLOCK_{$iblock['ID']}_SECTION';
                 }
             }
         ";

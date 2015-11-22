@@ -46,10 +46,12 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedT
         $map = array();
         $iblockId = $iblockId === null ? static::getIblockId() : $iblockId;
 
+        if (!$iblockId) return $map;
+
         $iblock = IblockStructure::iblock($iblockId);
         $props = IblockStructure::properties($iblockId);
 
-        if (empty($props)) return $map;
+        if (empty($props) || empty($iblock)) return $map;
 
         $isOldProps = $iblock['VERSION'] == 1;
 
@@ -101,20 +103,21 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedT
                 "{$singlePropsEntityName}.{$propValueColumn}" :
                 "{$propTableEntityName}.{$propValueColumn}";
 
-            switch ($prop['PROPERTY_TYPE'])
+            if ($isMultiple)
             {
-                case 'E':
+                $valueEntity = new Entity\ExpressionField(
+                    $propValueShortcut,
+                    $concatSubquery,
+                    $realValueStorage
+                );
+                $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
+            }
+            else
+            {
+                switch ($prop['PROPERTY_TYPE'])
+                {
+                    case 'E':
 
-                    if ($isMultiple)
-                    {
-                        $valueEntity = new Entity\ExpressionField(
-                            $propValueShortcut,
-                            $isMultiple ? $concatSubquery : '%s',
-                            $realValueStorage
-                        );
-                    }
-                    else
-                    {
                         $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
                         $entityName = '\\' . __CLASS__;
                         if ($prop['LINK_IBLOCK_ID'])
@@ -128,24 +131,12 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedT
                             $entityName,
                             $valueReference
                         );
-                    }
 
-                    break;
-                case 'G':
-                    if ($isMultiple)
-                    {
-                        $valueEntity = new Entity\ExpressionField(
-                            $propValueShortcut,
-                            $isMultiple ? $concatSubquery : '%s',
-                            $realValueStorage
-                        );
-                        $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
-                    }
-                    else
-                    {
+                        break;
+                    case 'G':
 
                         $valueReference = array("=this.{$realValueStorage}" => 'ref.ID');
-                        $entityName = '\\Maximaster\\Tools\\Orm\\Iblock\\SectionTable';
+                        $entityName = __NAMESPACE__ . '\\SectionTable';
                         if ($prop['LINK_IBLOCK_ID'])
                         {
                             $entityName = $entityName::compileEntity($prop['LINK_IBLOCK_ID'])->getDataClass();
@@ -157,23 +148,11 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedT
                             $entityName,
                             $valueReference
                         );
-                    }
 
-                    break;
+                        break;
 
-                case 'L':
+                    case 'L':
 
-                    if ($isMultiple)
-                    {
-                        $valueEntity = new Entity\ExpressionField(
-                            $propValueShortcut,
-                            $isMultiple ? $concatSubquery : '%s',
-                            $realValueStorage
-                        );
-                        $valueEntity->addFetchDataModifier(array(__CLASS__, 'multiValuesDataModifier'));
-                    }
-                    else
-                    {
                         $valueReference = array(
                             '=this.ID' => 'ref.PROPERTY_ID',
                             "=this.{$realValueStorage}" => 'ref.ID'
@@ -184,18 +163,22 @@ class ElementTable extends \Bitrix\Iblock\ElementTable implements IblockRelatedT
                             '\Bitrix\Iblock\PropertyEnumerationTable',
                             $valueReference
                         );
-                    }
 
-                    break;
-                case 'S': case 'N': default:
-                $valueEntity = new Entity\ExpressionField(
-                    $propValueShortcut,
-                    $isMultiple ? $concatSubquery : '%s',
-                    $realValueStorage
-                );
-
-                break;
+                        break;
+                    case 'S':
+                    case 'N':
+                        $valueEntity = new Entity\ExpressionField(
+                            $propValueShortcut,
+                            '%s',
+                            $realValueStorage
+                        );
+                        break;
+                    default:
+                        break;
+                }
             }
+
+            if (!$valueEntity) continue;
 
             /**
              * Для всех свойств, кроме одиночных 2.0
