@@ -60,8 +60,18 @@ class Listener extends Psr4Autoloader
             if (!$this->requireFile($file)) continue;
 
             $relativeClass = str_replace(array($handlersDirectory, '.php'), '', $file);
-            list($moduleName, $eventType) = explode('/', $relativeClass);
-            if (!$eventType) continue;
+            if (strpos($relativeClass, '/') !== false)
+            {
+                list($moduleName, $eventType) = explode('/', $relativeClass);
+            }
+            else
+            {
+                //Для хайлоадблоков, динамические классы сущностей которых не имеют связи с модулем
+                $moduleName = null;
+                $eventType = $relativeClass;
+            }
+
+            if (!$eventType || $eventType == 'Base') continue;
 
             $className = $ns . str_replace('/', '\\', $relativeClass);
             $class = new \ReflectionClass($className);
