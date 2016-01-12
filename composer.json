@@ -1,7 +1,14 @@
 {
   "name": "maximaster/tools",
   "description": "Модуль со вспомогательными инструментами для разработки",
-  "keywords": ["bitrix", "1С Битрикс", "d7", "модуль", "Битрикс", "Максимастер"],
+  "keywords": [
+    "bitrix",
+    "1С Битрикс",
+    "d7",
+    "модуль",
+    "Битрикс",
+    "Максимастер"
+  ],
   "type": "bitrix-module",
   "license": "MIT",
   "support": {
@@ -19,6 +26,36 @@
   },
   "require": {
     "php": ">=5.3.0",
-    "composer/installers": "*"
+    "composer/installers": "*",
+    "maximaster/tools.events": "dev-master",
+    "maximaster/tools.orm": "dev-master",
+    "maximaster/tools.twig": "*",
+    "maximaster/tools.property_interfaces": "dev-master"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/maximaster/tools.events.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/maximaster/tools.orm.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/maximaster/tools.twig.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/maximaster/tools.property_interfaces.git"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Maximaster\\": "lib/"
+    },
+    "files": [
+      "install/auto_installer.php"
+    ]
   }
 }

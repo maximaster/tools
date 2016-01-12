@@ -2,6 +2,11 @@
 
 namespace Maximaster\Tools;
 
+/**
+ * @deprecated Используйте автозагрузчик из composer. Этот будет удален в 1.0
+ * Class Psr4Autoloader
+ * @package Maximaster\Tools
+ */
 class Psr4Autoloader
 {
     private static $instance;
@@ -29,7 +34,7 @@ class Psr4Autoloader
      *
      * @param string $prefix Префикс пространства имён.
      * @param string $base_dir Базовая директория для файлов классов из пространства имён.
-     * @param bool $prepend Если true, добавить базовую директорию в начало стека. В этом случае она будет
+     * @param bool   $prepend Если true, добавить базовую директорию в начало стека. В этом случае она будет
      * проверяться первой.
      * @return void
      */
@@ -42,15 +47,15 @@ class Psr4Autoloader
         $base_dir = rtrim($base_dir, DIRECTORY_SEPARATOR) . '/';
 
         // инициализируем массив префиксов пространства имён
-        if (isset($this->prefixes[$prefix]) === false) {
-            $this->prefixes[$prefix] = array();
+        if (isset( $this->prefixes[ $prefix ] ) === false) {
+            $this->prefixes[ $prefix ] = array();
         }
 
         // сохраняем базовую директорию для префикса пространства имён
         if ($prepend) {
-            array_unshift($this->prefixes[$prefix], $base_dir);
+            array_unshift($this->prefixes[ $prefix ], $base_dir);
         } else {
-            array_push($this->prefixes[$prefix], $base_dir);
+            array_push($this->prefixes[ $prefix ], $base_dir);
         }
     }
 
@@ -101,19 +106,17 @@ class Psr4Autoloader
     protected function loadMappedFile($prefix, $relative_class)
     {
         // есть ли у этого префикса пространства имён какие либо базовые директории?
-        if (isset($this->prefixes[$prefix]) === false) {
+        if (isset( $this->prefixes[ $prefix ] ) === false) {
             return false;
         }
 
         // ищем префикс в базовых директориях
-        foreach ($this->prefixes[$prefix] as $base_dir) {
+        foreach ($this->prefixes[ $prefix ] as $base_dir) {
 
             // заменяем префикс базовой директорией,
             // заменяем разделители пространства имён на разделители директорий
             // к относительному имени класса добавляем .php
-            $file = $base_dir
-                . str_replace('\\', '/', $relative_class)
-                . '.php';
+            $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
 
             // если файл существует, загружаем его
             if ($this->requireFile($file)) {
@@ -147,15 +150,22 @@ class Psr4Autoloader
      */
     public static function getInstance()
     {
-        if (!self::$instance)
-        {
+        if (!self::$instance) {
             self::$instance = new self;
         }
 
         return self::$instance;
     }
 
-    private function __wakeup(){}
-    private function __clone(){}
-    private function __create(){}
+    private function __wakeup()
+    {
+    }
+
+    private function __clone()
+    {
+    }
+
+    private function __create()
+    {
+    }
 }

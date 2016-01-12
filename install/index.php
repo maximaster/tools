@@ -1,4 +1,5 @@
 <?
+
 class maximaster_tools extends \CModule
 {
     const MODULE_ID = 'maximaster.tools';
@@ -8,8 +9,8 @@ class maximaster_tools extends \CModule
         $arModuleVersion = array();
         include( dirname(__FILE__) . "/version.php" );
         $this->MODULE_ID = self::MODULE_ID;
-        $this->MODULE_VERSION = $arModuleVersion["VERSION"];
-        $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
+        $this->MODULE_VERSION = $arModuleVersion[ "VERSION" ];
+        $this->MODULE_VERSION_DATE = $arModuleVersion[ "VERSION_DATE" ];
         $this->MODULE_NAME = 'Инструменты Maximaster';
         $this->MODULE_DESCRIPTION = '';
 
@@ -24,7 +25,7 @@ class maximaster_tools extends \CModule
 
     function UnInstallDB($arParams = array())
     {
-       return true;
+        return true;
     }
 
     function InstallEvents()
