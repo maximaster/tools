@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 if (!ModuleManager::isModuleInstalled('maximaster.tools')) {
@@ -7,3 +8,5 @@ if (!ModuleManager::isModuleInstalled('maximaster.tools')) {
     $moduleInstaller = new maximaster_tools();
     $moduleInstaller->DoInstall();
 }
+
+Loader::includeModule('maximaster.tools');

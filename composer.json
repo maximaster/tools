@@ -55,7 +55,7 @@
       "Maximaster\\": "lib/"
     },
     "files": [
-      "install/auto_installer.php"
+      "install/autoloader.php"
     ]
   }
 }
