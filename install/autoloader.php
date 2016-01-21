@@ -4,7 +4,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 if (!ModuleManager::isModuleInstalled('maximaster.tools')) {
-    require_once( 'index.php' );
+    require_once( __DIR__.'/index.php' );
     $moduleInstaller = new maximaster_tools();
     $moduleInstaller->DoInstall();
 }
