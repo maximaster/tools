@@ -35,9 +35,6 @@
   "autoload": {
     "psr-4": {
       "Maximaster\\": "lib/"
-    },
-    "files": [
-      "install/autoloader.php"
-    ]
+    }
   }
 }
