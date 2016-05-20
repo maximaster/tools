@@ -28,7 +28,7 @@
     "php": ">=5.3.0",
     "composer/installers": "*",
     "maximaster/tools.events": "^1.5",
-    "maximaster/tools.twig": "^0.6",
+    "maximaster/tools.twig": "^0.7",
     "notamedia/console-jedi": "^1.0",
     "arrilot/bitrix-migrations": "^2.0.3"
   },
