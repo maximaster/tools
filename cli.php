@@ -6,7 +6,13 @@
 $migrationsConnector = new \Maximaster\MigrationsConnector();
 $migrationsCommands = $migrationsConnector->getCliCommandList();
 
-$commands = $migrationsCommands;
+/**
+ * Регистрируем команды для twig
+ */
+$twigCommands = array(
+    new \Maximaster\Tools\Twig\Command\ClearCacheCommand()
+);
+$commands = array_merge($twigCommands, $migrationsCommands);
 
 $config = array(
     'commands' => $commands
