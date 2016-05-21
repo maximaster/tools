@@ -34,7 +34,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Maximaster\\": "lib/"
+      "Maximaster\\": "lib/",
+      "files": ["autoinclude.php"]
     }
   }
 }
