@@ -3,8 +3,8 @@
 /**
  * Регистрируем все команды миграций arrilot/bitrix-migrations
  */
-$migrationsConnector = new \Maximaster\MigrationsConnector();
-$migrationsCommands = $migrationsConnector->getCliCommandList();
+$migrationsConnector = new \Maximaster\MigrationsAdapter();
+$migrationsCommands = $migrationsConnector->getCommands();
 
 /**
  * Регистрируем команды для twig
