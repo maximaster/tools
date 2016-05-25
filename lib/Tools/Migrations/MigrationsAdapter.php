@@ -1,6 +1,6 @@
 <?php
 
-namespace Maximaster;
+namespace Maximaster\Tools\Migrations;
 
 use Arrilot\BitrixMigrations\Commands\MakeCommand;
 use Arrilot\BitrixMigrations\Commands\InstallCommand;
