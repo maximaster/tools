@@ -3,7 +3,7 @@
 /**
  * Регистрируем все команды миграций arrilot/bitrix-migrations
  */
-$migrationsConnector = new \Maximaster\MigrationsAdapter();
+$migrationsConnector = new \Maximaster\Tools\Migrations\MigrationsAdapter();
 $migrationsCommands = $migrationsConnector->getCommands();
 
 /**
