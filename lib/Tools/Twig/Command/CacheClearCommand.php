@@ -7,14 +7,14 @@ use Notamedia\ConsoleJedi\Application\Command\BitrixCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ClearCacheCommand extends BitrixCommand {
+class CacheClearCommand extends BitrixCommand {
 
     /**
      * {@inheritdoc}
      */
     protected function configure()
     {
-        $this->setName('cache:clear-twig-cache')
+        $this->setName('twig:cache:clear')
             ->setDescription('Clear all twig cache');
     }
 

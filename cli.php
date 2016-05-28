@@ -10,7 +10,7 @@ $migrationsCommands = $migrationsConnector->getCommands();
  * Регистрируем команды для twig
  */
 $twigCommands = array(
-    new \Maximaster\Tools\Twig\Command\ClearCacheCommand()
+    new \Maximaster\Tools\Twig\Command\CacheClearCommand()
 );
 $commands = array_merge($twigCommands, $migrationsCommands);
 
